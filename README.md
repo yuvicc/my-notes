@@ -1,1 +1,1 @@
-# Bitcoin Core PR Reivew Notes
+My notes while learning.
