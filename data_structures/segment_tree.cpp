@@ -47,5 +47,5 @@ struct SegmentTree {
         }
     }
 
-    void update(int pos, int val) { return update(1, 0, n - 1, pos, val); }
+    void update(int pos, int val) { return update(1, 0, size - 1, pos, val); }
 };
