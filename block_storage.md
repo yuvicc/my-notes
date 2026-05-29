@@ -25,4 +25,34 @@ which means if Bitcoin Core crashes, either all changes are written or none are.
 - `Erase(const K& key)`: Queues a K (key) for deletion.
 - `Clear()` : Empties the pending batch
 
+A const ref to `CDBWrapper` class (`const CDBWrapper &parent;`)  which means that it cannot be null and cannot be restated, you might be thinking
+`CDBBatchWrite` class is for writing right? Correct. But writing is done by `WriteBatchImpl` struct not by `parent` ref which is just for reading obfuscation key:
+```
+struct WriteBatchImpl;
+const std::unique_ptr<WriteBatchImpl> m_impl_batch;
+```
+
+WriteImpl struct:
+```
+struct CDBBatch::WriteBatchImpl {
+    leveldb::WriteBatch batch;
+};
+```
+
+Why `friend class cdbwrapper;` then? Because `CDBWrapper::WriteBatch()` needs to reach inside `CDBBatch` to grab the private `m_impl_batch` buffer and hand it to LevelDB object.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
