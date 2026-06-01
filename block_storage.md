@@ -41,6 +41,25 @@ struct CDBBatch::WriteBatchImpl {
 
 Why `friend class cdbwrapper;` then? Because `CDBWrapper::WriteBatch()` needs to reach inside `CDBBatch` to grab the private `m_impl_batch` buffer and hand it to LevelDB object.
 
+### Class CDBIterator
+This custom class is used for scanning the leveldb database, it uses keys to iterate. LevelDB stores the keys in sorted order.
+- `IteratorImpl`: PIMPL struct hiding the leveldb::Iterator
+- `Seek(const K& key)` / `SeekToFirst()`: Moves the iterator to the specific key or very start.
+- `Next()`: Moves to the next key.
+- `Valid()`: Checks if the iterator has fallen off the edge of the databse.
+
+```
+void CDBIterator::SeekImpl(std::span<const std::byte> key)
+{
+    leveldb::Slice slKey(CharCast(key.data()), key.size());
+    m_impl_iter->iter->Seek(slKey);
+}
+```
+`CharCast` is a method which casts (using `reinterpret_cast`) from byte pointer to const char pointer:
+
+`static auto CharCast(const std::byte* data) { return reinterpret_cast<const char*>(data); }`
+
+Because `leveldb::Slice` type is a simple structure that contains a length and a pointer to an external byte array and is returned value when we call `Seek` to level db database.
 
 
 
