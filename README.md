@@ -1,1 +1,1 @@
-My notes while learning.
+My notes while contirbuting Bitcoin and Bitcoin Core.
