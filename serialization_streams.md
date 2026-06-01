@@ -5,21 +5,21 @@ the classes that converts typed C++ objects to/from raw bytes for storage, netwo
 
 ---
 
-## General
+## General Conventions
 
 | Operator / Method | Direction | Meaning |
 |---|---|---|
 | `operator<<` | IN | serialize (C++ object → bytes) |
 | `operator>>` | OUT | deserialize (bytes → C++ object) |
-| `write()` | IN | raw bytes appended |
-| `read()` | OUT | raw bytes consumed |
+| `write()` | IN | raw bytes append |
+| `read()` | OUT | raw bytes consume |
 
 Different classes = different **backing stores**:
 
 ```
 VectorWriter   →  writes into std::vector<unsigned char>
-SpanReader     →  reads from a fixed std::span (read-only view)
-SpanWriter     →  writes into a fixed std::span (bounded buffer)
+SpanReader     →  reads from a fixed std::span (read-only view) exception free
+SpanWriter     →  writes into a fixed std::span (bounded buffer) exception free
 DataStream     →  dual-ended buffer (read + write, owns memory)
 AutoFile       →  reads/writes a FILE* on disk
 BufferedFile   →  FILE* with rewind capability
@@ -67,7 +67,7 @@ nPos > vec.size()     → resize first, then write (gap filled with zeros)
 ```cpp
 template <typename... Args>
 VectorWriter(std::vector<unsigned char>& vchDataIn, size_t nPosIn, Args&&... args)
-    : VectorWriter{vchDataIn, nPosIn}                          // delegate to constructor 1
+    : VectorWriter{vchDataIn, nPosIn}                          // delegate to ctor 1
 {
     ::SerializeMany(*this, std::forward<Args>(args)...);       // serialize all args immediately
 }
@@ -640,10 +640,10 @@ The `requires std::is_rvalue_reference_v<S&&>` constraint **requires the stream 
 ```cpp
 AutoFile file(...);
 
-// ❌ won't compile — lvalue:
+// won't compile — lvalue:
 BufferedReader r(file);
 
-// ✅ compiles — rvalue:
+// compiles — rvalue:
 BufferedReader r(std::move(file));
 ```
 
