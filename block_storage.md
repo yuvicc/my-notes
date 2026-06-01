@@ -62,8 +62,31 @@ void CDBIterator::SeekImpl(std::span<const std::byte> key)
 Because `leveldb::Slice` type is a simple structure that contains a length and a pointer to an external byte array and is returned value when we call `Seek` to level db database.
 
 
+### Class `LevelDBContext`
+This class sets the contexts for LevelDB database such as WriteOptions, ReadOptions, Envs, etc.
+
+## Class CDBWrapper
+This is the main class representing an open LevelDB database.
+- `m_db_context`: Holds all actual LevelDB pointers (like leveldb::DB*). Hidden via PIMPL to keep headers clean.
+- `m_obfuscation`: The object handles the XOR encryption logic.
+- `Read()`, `Write()`, `Exists()`, `Erase()`: High-level template methods for single operations. Write and Erase actually just create a CDBBatch of size 1 and submit it.
+- `WriteBatch()`: Takes a `CDBBatch` and commits it to disk. `fSync=true` forces an immediate OS flush (fsync) to disk.
 
 
+```
+size_t CDBWrapper::DynamicMemoryUsage() const
+{
+    std::string memory;
+    std::optional<size_t> parsed;
+    if (!DBContext().pdb->GetProperty("leveldb.approximate-memory-usage", &memory) || !(parsed = ToIntegral<size_t>(memory))) {
+        LogDebug(BCLog::LEVELDB, "Failed to get approximate-memory-usage property\n");
+        return 0;
+    }
+    return parsed.value();
+}
+```
+We retrieve the dynamic memory usage using `GetProperty` member method of class `DB` in leveldb, this is not documented in leveldb [docs] readme, but can be seen in the source
+file [here](https://github.com/google/leveldb/blob/7ee830d02b623e8ffe0b95d59a74db1e58da04c5/include/leveldb/db.h#L114).
 
 
 
