@@ -90,6 +90,53 @@ file [here](https://github.com/google/leveldb/blob/7ee830d02b623e8ffe0b95d59a74d
 
 
 
+# BlockStorage (blockstorage.h/.cpp)
+
+## class `CBlockFileInfo`
+A small metadata class describing one blk?????.dat file. There's one of these per block file, kept in memory in `m_block_file_info` and presisted to LevelDB under the `f` key prefix.
+
+- `nUndoSize`: tracks undo file size.
+- Why height/time field present: Pruning decisions are made per-file. To know "can I safely delete file 3?" the node needs the height range it spans. The height fileds are used for O(1) lookup.
+- `AddBlock(nHeightsIn, nTimeIn)`: Called everytime a block is added to this file. This does not update the `nSize` and is done separately by the caller `FindNextBlockPos/UpdateBlockInfo` as size addition depends on header overhead.
+- `ToString()`: dumping method for debug logging.
+
+## class `BlockTreeDB`
+This class is a typed wrapper around the LevelDB database at `blocks/index/`. It inherits from class `CDBWrapper` and its ctors using `using CDBWrapper::CDBWrapper`.
+  - 'b' → a CDiskBlockIndex for each block (header fields + file position + status)
+  - 'f' → a CBlockFileInfo per block file
+  - 'l' → the last block file number
+  - 'F' → arbitrary named boolean flags (e.g. "prune")
+  - 'R' → the reindex-in-progress flag
+
+- `ReadBlockFileInfo` load one `f` record.
+- `ReadLastBlockFile` read the `l` pointer so we know which file to resume writing.
+- ....
+
+`BlockTreeDB` knows nothing about block files on disk, it only stores/loads metadata from levedb in `blocks/index/` path.
+
+## Class `BlockManager`
+
+This class that does all the flat files operatation, basically it owns it.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
 
 
 
